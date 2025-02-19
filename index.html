@@ -1,0 +1,250 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Die Deutsch.com Vokab</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'VT323', monospace; /* Apply VT323 font to the entire body */
+        }
+        .hidden {
+            display: none;
+        }
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: yellow;
+            border-radius: 50%;
+            animation: sparkle 0.5s linear;
+        }
+        @keyframes sparkle {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(2); }
+        }
+        .catcher {
+            background-color: rgba(0, 102, 204, 0.8); /* Soft blue */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .falling-word {
+            background-color: rgba(255, 255, 255, 0.9); /* Soft white */
+            color: #333; /* Dark text for contrast */
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        #score {
+            color: white; /* Change score color to white */
+        }
+        button {
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.2s;
+            margin: 20px 0; /* Add margin to buttons for spacing */
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .title {
+            font-family: 'Press Start 2P', cursive; /* Apply Press Start 2P font to the title */
+            font-size: 6rem; /* Make the title very large */
+            margin-bottom: 40px; /* Add space between title and buttons */
+            color: white; /* Title color */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen" 
+      style="background-image: url('https://i.pinimg.com/736x/c5/34/03/c5340348c8022b98f60587a8f0bf38da.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <div id="start-screen" class="text-center">
+        <h1 class="title">
+            🎮 Deutsch.com 🕹️<br>
+            Vokabelspiel
+        </h1>
+        <button id="german-catcher" class="bg-blue-600 text-white px-6 py-3 rounded-lg">Test Your German to English</button>
+        <button id="english-catcher" class="bg-green-600 text-white px-6 py-3 rounded-lg">Test Your English to German</button>
+    </div>
+
+    <div id="game-screen" class="hidden relative w-full h-full">
+        <div id="score" class="absolute top-4 left-4 text-xl font-bold">Score: 0</div>
+        <div id="catcher" class="catcher absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white px-4 py-2">Catch Here</div>
+    </div>
+
+    <div id="end-screen" class="hidden text-center">
+        <h1 id="end-message" class="text-3xl font-bold mb-4"></h1>
+        <ul id="wrong-words" class="list-disc list-inside"></ul>
+        <button id="restart" class="bg-blue-600 text-white px-6 py-3 rounded-lg mt-4">Restart</button>
+    </div>
+
+    <audio id="correct-sound" src="https
+
+    <audio id="correct-sound" src="https://www.soundjay.com/button/sounds/button-4.mp3"></audio>
+    <audio id="wrong-sound" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
+
+    <script>
+        const germanWords = [
+            { german: "der Großvater", english: "Grandfather" },
+            { german: "der Onkel", english: "Uncle" },
+            { german: "der Cousin", english: "Cousin" },
+            { german: "der Comic", english: "Comic" },
+            { german: "der Computer", english: "Computer" },
+            { german: "der Krimi", english: "Crime" },
+            { german: "der Sport", english: "Sport" },
+            { german: "der Workshop", english: "Workshop" },
+            { german: "der Beruf", english: "Profession" },
+            { german: "der Junge", english: "Boy" },
+            { german: "der Name", english: "Name" },
+            { german: "der Sänger", english: "Singer" },
+            { german: "der Schauspieler", english: "Actor" },
+            { german: "der Schüler", english: "Student" },
+            { german: "die Tennisspiele", english: "Tennis Matches" },
+            { german: "der Wohnort", english: "Place of Residence" },
+            { german: "der Bleistift", english: "Pencil" },
+            { german: "der Kugelschreiber", english: "Pen" },
+            { german: "das Heft", english: "Notebook" },
+            { german: "der Lehrer", english: "Teacher" },
+            { german: "der Radiergummi", english: "Eraser" },
+            { german: "der Raum", english: "Room" },
+            { german: "der Rucksack", english: "Backpack" },
+            { german: "der Spaß", english: "Fun" },
+            { german: "das Tanzen", english: "Dancing" },
+            { german: "der Job", english: "Job" },
+            { german: "der Kurs", english: "Course" },
+            { german: "der Preis", english: "Price" },
+            { german: "der Termin", english: "Appointment" },
+            { german: "der Unterricht", english: "Lesson" },
+            { german: "das Wochenende", english: "Weekend" },
+            { german: "die Ferien", english: "Holidays" },
+            { german: "der Kiosk", english: "Kiosk" }
+        ];
+
+        let catcherWord = "";
+        let fallingWords = [];
+        let score = 0;
+        let wrongWords = [];
+        let gameInterval;
+        let catcherType = "german"; // or "english"
+
+        const startScreen = document.getElementById("start-screen");
+        const gameScreen = document.getElementById("game-screen");
+        const endScreen = document.getElementById("end-screen");
+        const catcher = document.getElementById("catcher");
+        const scoreDisplay = document.getElementById("score");
+        const correctSound = document.getElementById("correct-sound");
+        const wrongSound = document.getElementById("wrong-sound");
+        const endMessage = document.getElementById("end-message");
+        const wrongWordsList = document.getElementById("wrong-words");
+
+        document.getElementById("german-catcher").addEventListener("click", () => startGame("german"));
+        document.getElementById("english-catcher").addEventListener("click", () => startGame("english"));
+        document.getElementById("restart").addEventListener("click", restartGame);
+
+        function startGame(type) {
+            catcherType = type;
+            startScreen.classList.add("hidden");
+            gameScreen.classList.remove("hidden");
+            score = 0;
+            wrongWords = [];
+            scoreDisplay.textContent = `Score: ${score}`;
+            setCatcherWord();
+            gameInterval = setInterval(gameLoop, 1000 / 60);
+        }
+
+        function setCatcherWord() {
+            const randomIndex = Math.floor(Math.random() * germanWords.length);
+            const wordPair = germanWords[randomIndex];
+            catcherWord = catcherType === "german" ? wordPair.german : wordPair.english;
+            catcher.textContent = catcherWord;
+            fallingWords = germanWords.map(word => catcherType === "german" ? word.english : word.german);
+        }
+
+        function gameLoop() {
+            // Move falling words
+            const fallingElements = document.querySelectorAll(".falling-word");
+            fallingElements.forEach(el => {
+                const top = parseFloat(el.style.top);
+                el.style.top = `${top + 4}px`; // Increased speed
+
+                if (top > window.innerHeight) {
+                    el.remove();
+                }
+
+                if (isColliding(el, catcher)) {
+                    if (el.textContent === (catcherType === "german" ? germanWords.find(word => word.german === catcherWord).english : germanWords.find(word => word.english === catcherWord).german)) {
+                        score++;
+                        showSparkles(el, "green");
+                        correctSound.play();
+                    } else {
+                        score--;
+                        wrongWords.push(el.textContent);
+                        showSparkles(el, "red");
+                        wrongSound.play();
+                    }
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    el.remove();
+                    setCatcherWord();
+                }
+            });
+
+            // Limit to 5 falling words
+            if (fallingElements.length < 5 && Math.random() < 0.02) {
+                const word = fallingWords[Math.floor(Math.random() * fallingWords.length)];
+                const wordElement = document.createElement("div");
+                wordElement.textContent = word;
+                wordElement.classList.add("falling-word", "absolute", "bg-white", "text-black", "px-2", "py-1", "rounded");
+                wordElement.style.left = `${Math.random() * (window.innerWidth - 100)}px`;
+                wordElement.style.top = "0px";
+                gameScreen.appendChild(wordElement);
+            }
+
+            // Check for end conditions
+            if (score <= -30) {
+                endGame("You Lost", "red");
+            } else if (score >= 85) {
+                endGame("You Won", "green");
+            }
+        }
+
+        function isColliding(el1, el2) {
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+            return !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
+        }
+
+        function showSparkles(el, color) {
+            for (let i = 0; i < 10; i++) {
+                const sparkle = document.createElement("div");
+                sparkle.classList.add("sparkle");
+                sparkle.style.background = color;
+                sparkle.style.left = `${el.offsetLeft + Math.random() * el.offsetWidth}px`;
+                sparkle.style.top = `${el.offsetTop + Math.random() * el.offsetHeight}px`;
+                gameScreen.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 500);
+            }
+        }
+
+        function endGame(message, color) {
+            clearInterval(gameInterval);
+            gameScreen.classList.add("hidden");
+            endScreen.classList.remove("hidden");
+            endMessage.textContent = message;
+            endMessage.style.color = color;
+            wrongWordsList.innerHTML = wrongWords.map(word => `<li>${word}</li>`).join("");
+        }
+
+        function restartGame() {
+            endScreen.classList.add("hidden");
+            startScreen.classList.remove("hidden");
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") {
+                catcher.style.left = `${Math.max(0, catcher.offsetLeft - 20)}px`;
+            } else if (e.key === "ArrowRight") {
+                catcher.style.left = `${Math.min(window.innerWidth - catcher.offsetWidth, catcher.offsetLeft + 20)}px`;
+            }
+        });
+    </script>
+</body>
+</html>
